@@ -1,0 +1,70 @@
+Feed Forward
+
+• 2 camadas densas com 64 neur´onios
+• 1 camada densa com 1000 neur´onios (reshaped para (200,5))
+• 1 camada de upsampling com fator = 10
+• 1 Camada de output com ativa¸c˜ao softmax
+
+Foi copiada tal e qual do trabalho pratico e como teve uma boa performance manti. As diferencas foram fazer o reshape para 200,5 de modo a conseguir 
+ter as 5 classes e depois fazer o upsampling por 10 para repor o tamanho de 1000 anterior (de modo a reduzir o numero de parametros na rede).
+Usei batch normalization porque melhorou o resultado.
+Usei leaky relu.
+64 batch size pq funcionou bem.
+Comecei com 500 épocas mas percebi que chegava a um ponto pouco depois das 100 em que nunca mais melhorava por isso acabei por ficar com 
+100 apenas (e tbm era rápido por isso nao havia prob de ter 100).
+
+====================================================
+
+Convolucional
+
+• 2 Camadas para o input
+• 4 Camadas Convolucionais (64, 64, 64 e 128 neur´onios e filtro = 5, com padding = same)
+• 1 Camada TimeDistributed com Densa com 35 neur´onios (reshaped para (-1,5))
+• 1 Camada UpSampling com fator = 78
+• 1 Camada de output com fun¸c˜ao de ativa¸c˜ao softmax
+
+Pelo que vi, convinha usar numeros impares no filtro porque são simetricos em torno da origem (mesma distancia para todos os lados onde é aplicado)
+
+Os resultados melhoraram bastante ao usar padding na recorrente (fiz primeiro) e depois pus nesta (as metricas nao melhoraram muito mas a 
+segmentacao em si melhorou).
+Decidi usar batch normalization porque melhorou os resultados e leaky relu.
+Relativamente às camadas comecei a adicionar até haver overfit. Quando comecou a haver mais overfit usei dropout mas piorou muito os resultados.
+Por isto decidi usar max pooling para aumentar um pouco a generalizacao.
+Fator de upsampling foi escolhido primeiro pelas contas de modo a manter o numero de parametros antes e depois da densa mas por as vezes 
+haver erro, tive de ir aumentando aos poucos.
+Camada timedistributed usada para aplicar uma camada densa a cada trecho temporal do input (por ser uma sequencia temporal faz sentido usar isto ao inves
+de uma densa normal).
+Usei batch size maior = 128 para nao demorar tanto visto que esta rede já é mais lenta que a feedforward.
+Usei apenas 50 epocas porque nao houve melhoria apos isto e a partir deste ponto comecava a haver overfit visivel pelo grafico da accuracy.
+
+
+====================================================
+Rede Recorrente
+
+• 2 Camadas para o input
+• 3 Camadas convolucionais (32, 64, 128 com kernel= 3/5 e padding=same)
+• 1 Camadas LSTM (com 128 unidades)
+• 1 Camada TimeDistributed com densa com 35 neur´onios (reshaped para (-1,5))
+• 1 Camada UpSampling com fator = 40
+• 1 Camada de output com fun¸c˜ao de ativa¸c˜ao softmax
+
+Fazer um crescendo nos neuronios nas camadas convolucionais de modo a aumentar a abstração para a deteção de features.
+Depois disto usar uma camada lstm porque permite olhar.
+Usar max pooling, dropout e recurrentDropout para o overfitting
+LSTM permite treinar a mesma rede sobre uma sequencia de inputs ao longo do tempo e repetir sobre essas sequencias para treinar. Visto que é sempre a mesma
+rede a ser treinada, precisamos de passar essa informacao do estado ao longo do tempo.
+
+====================================================
+Transformer
+
+• 1 Camada de input
+• 3 Camadas convolucionais (32, 64 e 128 neur´onios, filter = 3/5 com padding = same)
+• 1 Camada LSTM (128 unidades)
+• 2 Transformer Blocks (encoders)
+• 1 Camada TimeDistributed com Densa com 35 neur´onios (reshaped para (-1,5))
+• 1 Camada UpSampling com fator = 40
+• 1 Camada de output com fun¸c˜ao de ativa¸c˜ao softmax
+
+Igual a recorrente com mais 2 transformers. Features passam de encoder para encoder.
+A transformada de fourier como retorna uma sequencia pode ser vista como o embedding inicial e assim o transformer ao usar estes embeddings como context
+pode calcular os contextual embeddings.
